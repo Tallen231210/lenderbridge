@@ -2,6 +2,8 @@
  * Client-side Zod validation schemas for LenderBridge forms.
  * These provide instant user feedback on form input.
  * Server-side Convex mutations ALWAYS re-validate — never trust client data.
+ *
+ * Uses Zod v4 API — error messages use `message` instead of `required_error`.
  */
 import { z } from "zod";
 
@@ -14,15 +16,15 @@ import { z } from "zod";
 export const dealFormSchema = z.object({
   // Step 1: Loan Info
   loan_type: z.enum(["permanent", "bridge", "construction", "land", "sba"], {
-    required_error: "Please select a loan type",
+    message: "Please select a loan type",
   }),
   loan_amount: z
-    .number({ required_error: "Loan amount is required" })
+    .number({ message: "Loan amount is required" })
     .min(50000, "Loan amount must be at least $50,000")
     .max(500000000, "Loan amount exceeds maximum"),
   transaction_type: z.enum(
     ["purchase", "refinance", "bridge", "construction", "cash_out"],
-    { required_error: "Please select a transaction type" }
+    { message: "Please select a transaction type" }
   ),
   loan_position: z.enum(["first", "subordinate"]).optional().default("first"),
 
@@ -33,7 +35,7 @@ export const dealFormSchema = z.object({
     .max(500, "Address is too long"),
   property_type: z.enum(
     ["multifamily", "retail", "office", "industrial", "mixed_use", "land", "other"],
-    { required_error: "Please select a property type" }
+    { message: "Please select a property type" }
   ),
 
   // Step 3: Borrower Info
