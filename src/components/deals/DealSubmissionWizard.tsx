@@ -98,7 +98,7 @@ export function DealSubmissionWizard() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const dealId = await createDeal({
+      await createDeal({
         borrower_name: formData.borrower_name || "",
         borrower_email: formData.borrower_email || undefined,
         borrower_phone: formData.borrower_phone || undefined,

@@ -23,7 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
-import { formatCurrency, formatRelativeTime, daysSince } from "@/lib/utils";
+import { formatCurrency, formatRelativeTime } from "@/lib/utils";
 import { TERMINAL_STAGES } from "@/lib/constants";
 
 export default function PartnerDashboardPage() {

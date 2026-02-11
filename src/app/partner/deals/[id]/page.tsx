@@ -13,7 +13,6 @@ import { PageSkeleton } from "@/components/shared/LoadingSkeleton";
 import { DealStatusBadge } from "@/components/deals/DealStatusBadge";
 import { DealStageTimeline } from "@/components/deals/DealStageTimeline";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { formatCurrency, formatDate, formatRelativeTime } from "@/lib/utils";
 

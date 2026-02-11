@@ -395,6 +395,51 @@ export const assignLender = mutation({
 });
 
 /**
+ * Get all deals enriched with partner and lender names — admin only.
+ * Used by the Kanban pipeline board where we need display names
+ * without requiring separate lookups for each card.
+ */
+export const getAllDealsWithNames = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+
+    const deals = await ctx.db.query("deals").order("desc").collect();
+
+    // Batch-lookup unique partner and lender IDs to avoid N+1 queries
+    const partnerIds = Array.from(new Set(deals.map((d) => d.partner_id)));
+    const lenderIds = Array.from(
+      new Set(deals.map((d) => d.assigned_lender_id).filter(Boolean))
+    );
+
+    const partners = await Promise.all(
+      partnerIds.map((id) => ctx.db.get(id))
+    );
+    const lenders = await Promise.all(
+      lenderIds.map((id) => ctx.db.get(id!))
+    );
+
+    // Build lookup maps for O(1) name resolution per deal
+    const partnerMap = new Map<string, string>();
+    for (const p of partners) {
+      if (p && "name" in p) partnerMap.set(p._id, p.name);
+    }
+    const lenderMap = new Map<string, string>();
+    for (const l of lenders) {
+      if (l && "name" in l) lenderMap.set(l._id, l.name);
+    }
+
+    return deals.map((deal) => ({
+      ...deal,
+      partner_name: partnerMap.get(deal.partner_id) || "Unknown",
+      lender_name: deal.assigned_lender_id
+        ? lenderMap.get(deal.assigned_lender_id) || "Unknown"
+        : undefined,
+    }));
+  },
+});
+
+/**
  * Add admin notes to a deal — admin only.
  */
 export const addDealNote = mutation({
