@@ -33,6 +33,73 @@ This codebase is evaluated on whether another engineer could pick it up and keep
 
 ---
 
+## GitHub Repository Standards — CRITICAL
+
+The evaluators will inspect the GitHub repo directly. It must look like a professional, production codebase.
+
+### .gitignore (create this FIRST, before any other files)
+```
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment variables — NEVER commit secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Next.js build
+.next/
+out/
+
+# Convex generated
+convex/_generated/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Vercel
+.vercel
+```
+
+### What must NEVER be in the repo:
+- ❌ `.env.local` or any file with API keys, secrets, or passwords
+- ❌ `node_modules/` folder
+- ❌ Console.log statements left in production code (use proper error logging instead)
+- ❌ Commented-out code blocks (delete unused code, git history preserves it)
+- ❌ TODO comments without context (if you must leave a TODO, explain what and why)
+- ❌ Large generated files or build artifacts
+
+### What MUST be in the repo:
+- ✅ `.gitignore` (first file committed)
+- ✅ `README.md` (comprehensive, well-formatted — this is the repo's landing page)
+- ✅ `claude.md` (shows the architectural spec — demonstrates planning)
+- ✅ Clean, organized folder structure matching the project structure spec
+- ✅ `package.json` with all dependencies properly listed
+- ✅ TypeScript config files
+
+### Commit Hygiene:
+- Commit after each logical unit of work is complete and working
+- Never commit broken code to main branch
+- Each commit message follows Conventional Commits format (see below)
+- Aim for 20-40 total commits across the build — this shows steady, incremental progress
+- The git log should read like a story: scaffolding → foundation → features → testing → polish → deploy
+
+---
+
 ## Project Structure
 ```
 lenderbridge/
@@ -890,7 +957,7 @@ The script should:
 1. Generate all 7,000 records programmatically (do NOT hardcode 7,000 entries)
 2. Ensure variety — different states, specialties, loan ranges throughout
 3. Batch insert (Convex has batch limits — insert in chunks of 100-200)
-4. Log progress: "Inserted 200/7000 lenders..."
+4. Log progress: "Inserted 200/7000 lenders..." 
 5. Run as a standalone script: `npx ts-node scripts/seed-lenders.ts` or as a Convex function
 
 ### Other Demo Data
