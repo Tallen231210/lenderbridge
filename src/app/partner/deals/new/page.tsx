@@ -1,12 +1,22 @@
 /**
- * Submit New Deal — multi-step form for partners to submit a new deal.
- * Placeholder — full implementation coming in Sprint 2.
+ * Deal submission page — renders the multi-step DealSubmissionWizard.
+ * Partners fill out loan info, property info, borrower info, then review and submit.
+ * Target: under 90 seconds to complete.
  */
-export default function SubmitNewDealPage() {
+"use client";
+
+import { DealSubmissionWizard } from "@/components/deals/DealSubmissionWizard";
+
+export default function NewDealPage() {
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-900">Submit New Deal</h1>
-      <p className="mt-2 text-gray-600">Fill out deal information</p>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Submit New Deal</h1>
+        <p className="text-gray-500 mt-1">
+          Fill out the deal details below. It should take less than 2 minutes.
+        </p>
+      </div>
+      <DealSubmissionWizard />
     </div>
   );
 }
