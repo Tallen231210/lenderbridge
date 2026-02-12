@@ -10,6 +10,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { UserButton } from "@clerk/nextjs";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 const NAV_ITEMS = [
   { href: "/partner/dashboard", label: "Dashboard", icon: "📊" },
@@ -25,11 +26,12 @@ export function PartnerSidebar() {
 
   return (
     <aside className="flex flex-col w-64 min-h-screen bg-white border-r border-gray-200">
-      {/* Logo / Brand */}
-      <div className="flex items-center h-16 px-6 border-b border-gray-200">
+      {/* Logo / Brand + Notification Bell */}
+      <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
         <Link href="/partner/dashboard" className="flex items-center gap-2">
           <span className="text-xl font-bold text-blue-700">LenderBridge</span>
         </Link>
+        <NotificationBell href="/partner/notifications" />
       </div>
 
       {/* Navigation */}
