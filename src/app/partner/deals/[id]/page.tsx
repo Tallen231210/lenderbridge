@@ -14,7 +14,9 @@ import { DealStatusBadge } from "@/components/deals/DealStatusBadge";
 import { DealStageTimeline } from "@/components/deals/DealStageTimeline";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate, formatRelativeTime } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function PartnerDealDetailPage() {
   const params = useParams();
@@ -99,6 +101,41 @@ export default function PartnerDealDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Borrower invite — shows a copyable signup link if no borrower account is linked yet */}
+      {deal.borrower_email && !deal.borrower_id && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="py-4 flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-gray-900">Borrower Invite</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Share this link with <span className="font-medium">{deal.borrower_email}</span> so they can track their deal
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              onClick={() => {
+                const url = `${window.location.origin}/sign-up?email=${encodeURIComponent(deal.borrower_email!)}`;
+                navigator.clipboard.writeText(url);
+                toast.success("Borrower invite link copied");
+              }}
+            >
+              Copy Link
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+      {deal.borrower_id && (
+        <Card className="bg-green-50 border-green-200">
+          <CardContent className="py-4">
+            <p className="text-sm text-green-700 flex items-center gap-2">
+              <span>&#10003;</span> Borrower account linked
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Activity feed */}
       <Card>

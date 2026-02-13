@@ -46,6 +46,7 @@ import {
   TERMINAL_STAGES,
 } from "@/lib/constants";
 import { toast } from "sonner";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 export default function AdminDealDetailPage() {
   const params = useParams();
@@ -58,6 +59,7 @@ export default function AdminDealDetailPage() {
   const updateStatus = useMutation(api.deals.updateDealStatus);
   const addNote = useMutation(api.deals.addDealNote);
 
+  const handleError = useErrorHandler();
   const [noteText, setNoteText] = useState("");
   const [statusNote, setStatusNote] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
@@ -89,9 +91,7 @@ export default function AdminDealDetailPage() {
       });
       toast.success(`Deal advanced to ${STAGE_LABELS[nextStage]}`);
     } catch (err: unknown) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to advance deal"
-      );
+      handleError(err);
     }
   }
 
@@ -121,9 +121,7 @@ export default function AdminDealDetailPage() {
       setSelectedStatus("");
       setStatusNote("");
     } catch (err: unknown) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to update status"
-      );
+      handleError(err);
     }
   }
 
@@ -134,7 +132,7 @@ export default function AdminDealDetailPage() {
       toast.success("Note added");
       setNoteText("");
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to add note");
+      handleError(err);
     }
   }
 
@@ -247,6 +245,41 @@ export default function AdminDealDetailPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Borrower invite — shows a copyable signup link if no borrower account is linked yet */}
+          {deal.borrower_email && !deal.borrower_id && (
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="py-4 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-900">Borrower Invite</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Share this link with <span className="font-medium">{deal.borrower_email}</span> so they can track their deal
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => {
+                    const url = `${window.location.origin}/sign-up?email=${encodeURIComponent(deal.borrower_email!)}`;
+                    navigator.clipboard.writeText(url);
+                    toast.success("Borrower invite link copied");
+                  }}
+                >
+                  Copy Link
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+          {deal.borrower_id && (
+            <Card className="bg-green-50 border-green-200">
+              <CardContent className="py-4">
+                <p className="text-sm text-green-700 flex items-center gap-2">
+                  <span>&#10003;</span> Borrower account linked
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Activity feed */}
           <Card>
@@ -453,6 +486,7 @@ function LenderAssignDialog({
     pageSize: 20,
   });
   const assignLender = useMutation(api.deals.assignLender);
+  const handleError = useErrorHandler();
   const [searchText, setSearchText] = useState("");
 
   const filteredLenders = lenders?.lenders?.filter((l) =>
@@ -467,9 +501,7 @@ function LenderAssignDialog({
       toast.success("Lender assigned successfully");
       onClose();
     } catch (err: unknown) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to assign lender"
-      );
+      handleError(err);
     }
   }
 

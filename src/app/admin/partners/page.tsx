@@ -19,6 +19,9 @@ import {
 } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function AdminPartnersPage() {
   const router = useRouter();
@@ -67,6 +70,30 @@ export default function AdminPartnersPage() {
           {partners.length} referral partner{partners.length !== 1 ? "s" : ""}
         </p>
       </div>
+
+      {/* Partner invite link — admin shares this URL with new referral partners */}
+      <Card className="bg-gray-50 border-dashed">
+        <CardContent className="py-4 flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-gray-900">Partner Registration Link</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Share this link with referral partners to invite them to the platform
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            onClick={() => {
+              const url = `${window.location.origin}/sign-up/partner`;
+              navigator.clipboard.writeText(url);
+              toast.success("Partner invite link copied to clipboard");
+            }}
+          >
+            Copy Link
+          </Button>
+        </CardContent>
+      </Card>
 
       {enrichedPartners.length === 0 ? (
         <EmptyState

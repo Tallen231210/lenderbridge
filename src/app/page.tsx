@@ -60,28 +60,13 @@ export default function LandingPage() {
           Submit, track, and manage commercial loan deals with real-time
           pipeline visibility.
         </p>
-        <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="mt-8">
           <Link href="/sign-in">
             <Button size="lg" className="w-full sm:w-auto">
               Sign In
             </Button>
           </Link>
-          <Link href="/sign-up/partner">
-            <Button
-              variant="outline"
-              size="lg"
-              className="w-full sm:w-auto"
-            >
-              Join as Partner
-            </Button>
-          </Link>
         </div>
-        <p className="mt-4 text-sm text-gray-400">
-          Borrower?{" "}
-          <Link href="/sign-in" className="text-black underline underline-offset-4 hover:text-gray-600">
-            Check your deal status
-          </Link>
-        </p>
       </div>
     </div>
   );

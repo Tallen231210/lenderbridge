@@ -130,7 +130,7 @@ lenderbridge/
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx            # Root layout with ClerkProvider + ConvexProvider
-│   │   ├── page.tsx              # Landing: Sign In, Join as Partner, borrower link
+│   │   ├── page.tsx              # Landing: branding + single Sign In button
 │   │   ├── sign-in/[[...sign-in]]/page.tsx
 │   │   ├── sign-up/
 │   │   │   ├── [[...sign-up]]/page.tsx      # Generic signup (defaults to borrower)
@@ -809,23 +809,33 @@ export const updateDealStatus = mutation({
 
 ### Landing Page (`/`)
 - Authenticated users are auto-redirected to their role-specific dashboard
-- Unauthenticated users see three entry points:
-  - **"Sign In"** (primary button) — existing users of all roles
-  - **"Join as Partner"** (outline button) — new referral partner signup
-  - **"Borrower? Check your deal status"** (text link) — points to sign-in
+- Unauthenticated users see: LenderBridge branding, tagline, and a single **"Sign In"** button
+- No public signup — all user registration is invite-based (see below)
 
-### Partner Signup (`/sign-up/partner`)
-- Uses Clerk's SignUp component with `forceRedirectUrl` to `/sign-up/partner/complete`
+### Partner Onboarding (Invite-Based)
+- Admin shares a registration link (`/sign-up/partner`) with referral partners
+- The link is available on the Admin → Partners page with a "Copy Link" button
+- Partners are NOT discoverable via public signup — they must receive the link from the broker
+- The `/sign-up/partner` page uses Clerk's SignUp component → redirects to `/sign-up/partner/complete`
 - Complete page calls `ensurePartnerRole` mutation which:
   - If user already exists in Convex (webhook fired first): upgrades from "borrower" to "partner"
   - If user doesn't exist yet (webhook race condition): creates user directly as "partner"
   - Never allows escalation to "admin"
 - Redirects to partner dashboard after role assignment
 
+### Borrower Onboarding (Invite-Based)
+- Borrowers do NOT self-register — they are invited indirectly through the deal submission flow
+- When a partner submits a deal with a borrower's email, a copyable invite link is generated
+- The invite link is visible on the deal detail page (admin and partner views)
+- URL format: `/sign-up?email={borrower_email}` (generic signup defaults to borrower role)
+- When the borrower signs up, the Clerk webhook calls `linkBorrowerToDeals` to auto-connect
+  their account to any deals referencing their email address
+- After linking, the borrower can see their deal status in the borrower portal
+
 ### Generic Signup (`/sign-up`)
 - Clerk webhook creates user in Convex with default "borrower" role
-- Not linked from the landing page — borrowers are invited by partners or use sign-in
-- Serves as a catch-all for edge cases
+- Not linked from the landing page or sign-in page
+- Used as the target for borrower invite links (with email pre-populated)
 
 ### Admin Accounts
 - No self-service signup — admin accounts are created directly in the database

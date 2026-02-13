@@ -60,13 +60,20 @@ export async function POST(req: Request) {
     const name = [first_name, last_name].filter(Boolean).join(" ") || "User";
 
     if (email) {
-      await convex.mutation(api.users.createUser, {
+      const userId = await convex.mutation(api.users.createUser, {
         email,
         name,
         clerk_id: id,
         // Default to borrower role — admin manually promotes to partner/admin
         role: "borrower",
       });
+
+      // Auto-link the new borrower to any deals submitted with their email.
+      // This enables the invite-based onboarding flow: partner submits deal with
+      // borrower's email → borrower signs up via invite link → deals auto-link.
+      if (userId) {
+        await convex.mutation(api.users.linkBorrowerToDeals, { userId });
+      }
     }
   }
 

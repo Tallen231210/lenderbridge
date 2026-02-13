@@ -181,6 +181,40 @@ export const ensurePartnerRole = mutation({
 });
 
 /**
+ * Auto-link a borrower to any deals that reference their email.
+ * Called after a new user is created (via Clerk webhook) to connect
+ * borrower accounts to deals submitted by partners with their email.
+ * Skips deals that already have a borrower_id assigned.
+ */
+export const linkBorrowerToDeals = mutation({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user || !user.email) return 0;
+
+    // Find all deals where borrower_email matches and borrower_id is not yet set
+    const matchingDeals = await ctx.db
+      .query("deals")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("borrower_email"), user.email),
+          q.eq(q.field("borrower_id"), undefined)
+        )
+      )
+      .collect();
+
+    // Link each matching deal to the borrower's user account
+    for (const deal of matchingDeals) {
+      await ctx.db.patch(deal._id, { borrower_id: user._id });
+    }
+
+    return matchingDeals.length;
+  },
+});
+
+/**
  * Update the current user's profile fields (phone, company, license_number).
  * Users can only update their own profile.
  */

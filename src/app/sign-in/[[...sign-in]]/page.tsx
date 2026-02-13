@@ -37,6 +37,9 @@ export default function SignInPage() {
           elements: {
             rootBox: "mx-auto",
             card: "shadow-lg",
+            // Hide the "Don't have an account? Sign up" footer link.
+            // Users are invited via shared links, not public self-registration.
+            footerAction: "hidden",
           },
         }}
       />
