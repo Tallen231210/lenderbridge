@@ -23,12 +23,14 @@ import {
 import { Id } from "../../../../convex/_generated/dataModel";
 import { formatCurrency, formatPercent, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 type StatusFilter = "all" | "pending" | "paid" | "voided";
 
 export default function AdminCommissionsPage() {
   const commissions = useQuery(api.commissions.getAllCommissions);
   const markAsPaid = useMutation(api.commissions.markAsPaid);
+  const handleError = useErrorHandler();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   if (commissions === undefined) {
@@ -50,9 +52,7 @@ export default function AdminCommissionsPage() {
       await markAsPaid({ commissionId });
       toast.success("Commission marked as paid");
     } catch (err: unknown) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to update commission"
-      );
+      handleError(err);
     }
   }
 

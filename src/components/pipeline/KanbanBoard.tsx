@@ -38,10 +38,12 @@ import {
 } from "@/components/ui/select";
 import { PageSkeleton } from "@/components/shared/LoadingSkeleton";
 import { toast } from "sonner";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 export function KanbanBoard() {
   const deals = useQuery(api.deals.getAllDealsWithNames);
   const updateStatus = useMutation(api.deals.updateDealStatus);
+  const handleError = useErrorHandler();
 
   const [activeDeal, setActiveDeal] = useState<DealCardData | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -188,14 +190,14 @@ export function KanbanBoard() {
           `Deal moved to ${STAGE_LABELS[targetStage!]}`
         );
       })
-      .catch((err: Error) => {
+      .catch((err: unknown) => {
         // Revert optimistic move on failure
         setPendingMoves((prev) => {
           const next = { ...prev };
           delete next[dealIdStr];
           return next;
         });
-        toast.error(err.message || "Failed to update deal status");
+        handleError(err);
       });
   }
 
