@@ -48,7 +48,7 @@ export default function PartnerDashboardPage() {
   const recentDeals = deals.slice(0, 5);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 animate-fade-in">
       {/* Header with CTA */}
       <div className="flex items-center justify-between">
         <div>

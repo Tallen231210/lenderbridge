@@ -24,7 +24,7 @@ export default function BorrowerDashboardPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Your Deals</h1>
         <p className="text-gray-500 mt-1">
