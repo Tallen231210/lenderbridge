@@ -1,10 +1,11 @@
 /**
  * Admin activity log — chronological feed of all deal actions across the platform.
  * Shows submissions, stage changes, lender assignments, notes, and more.
- * Provides a global audit trail for the broker to monitor all pipeline activity.
+ * Filterable by action type for quick access to specific activity categories.
  */
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { PageSkeleton } from "@/components/shared/LoadingSkeleton";
@@ -13,32 +14,69 @@ import { DealStatusBadge } from "@/components/deals/DealStatusBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatRelativeTime } from "@/lib/utils";
 
+const ACTION_FILTERS = [
+  { value: "all", label: "All Activity" },
+  { value: "deal_submitted", label: "Submissions" },
+  { value: "status_change", label: "Stage Changes" },
+  { value: "lender_assigned", label: "Lender Assignments" },
+  { value: "note_added", label: "Notes" },
+  { value: "commission_created", label: "Commissions" },
+] as const;
+
 export default function AdminActivityPage() {
   const activities = useQuery(api.activities.getAllActivities);
+  const [filter, setFilter] = useState("all");
 
   if (activities === undefined) {
     return <PageSkeleton />;
   }
 
+  const filtered =
+    filter === "all"
+      ? activities
+      : activities.filter((a) => a.action === filter);
+
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Activity Log</h1>
-        <p className="text-gray-500 mt-1">
-          All deal activity across the platform
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Activity Log</h1>
+          <p className="text-gray-500 mt-1">
+            {filtered.length} activit{filtered.length === 1 ? "y" : "ies"}
+            {filter !== "all" && " (filtered)"}
+          </p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {ACTION_FILTERS.map((f) => (
+            <button
+              key={f.value}
+              onClick={() => setFilter(f.value)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                filter === f.value
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {activities.length === 0 ? (
+      {filtered.length === 0 ? (
         <EmptyState
-          title="No activity yet"
-          description="Activity will appear here as deals are submitted and managed."
+          title="No activity found"
+          description={
+            filter !== "all"
+              ? "No activity matches the selected filter. Try a different filter."
+              : "Activity will appear here as deals are submitted and managed."
+          }
         />
       ) : (
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-4">
-              {activities.map((activity) => (
+              {filtered.map((activity) => (
                 <div
                   key={activity._id}
                   className="flex items-start gap-4 pb-4 border-b border-gray-100 last:border-0"

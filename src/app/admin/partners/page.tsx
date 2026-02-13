@@ -18,8 +18,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export default function AdminPartnersPage() {
+  const router = useRouter();
   const partners = useQuery(api.users.getPartners);
   const allDeals = useQuery(api.deals.getAllDeals);
   const allCommissions = useQuery(api.commissions.getAllCommissions);
@@ -86,8 +88,12 @@ export default function AdminPartnersPage() {
             </TableHeader>
             <TableBody>
               {enrichedPartners.map((partner) => (
-                <TableRow key={partner._id}>
-                  <TableCell className="font-medium">
+                <TableRow
+                  key={partner._id}
+                  className="cursor-pointer hover:bg-gray-50"
+                  onClick={() => router.push(`/admin/partners/${partner._id}`)}
+                >
+                  <TableCell className="font-medium text-blue-600">
                     {partner.name}
                   </TableCell>
                   <TableCell className="text-gray-500">
