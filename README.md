@@ -4,7 +4,7 @@
 
 LenderBridge is a full-stack web application that streamlines commercial loan deal management for a broker, their referral partners, and borrowers. It replaces a manual spreadsheet-and-email workflow with a real-time pipeline, automated commission tracking, and role-based portals.
 
-**Live Demo:** _[Vercel URL will be added after deployment]_
+**Live Demo:** https://lenderbridge.vercel.app
 
 ---
 
