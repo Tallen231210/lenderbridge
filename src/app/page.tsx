@@ -74,6 +74,12 @@ export default function LandingPage() {
             </Button>
           </Link>
         </div>
+        <p className="mt-4 text-sm text-gray-400">
+          Borrower?{" "}
+          <Link href="/sign-in" className="text-blue-500 hover:text-blue-600 underline">
+            Check your deal status
+          </Link>
+        </p>
       </div>
     </div>
   );
