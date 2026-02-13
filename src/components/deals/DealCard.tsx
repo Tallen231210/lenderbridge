@@ -54,13 +54,13 @@ export function DealCard({ deal }: DealCardProps) {
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing"
+      className="bg-white rounded-md border border-gray-200 p-3 hover:border-gray-300 transition-colors cursor-grab active:cursor-grabbing"
     >
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {/* Property address — clickable link to deal detail */}
         <Link
           href={`/admin/deals/${deal._id}`}
-          className="text-sm font-medium text-gray-900 hover:text-blue-600 block truncate"
+          className="text-sm font-medium text-black hover:underline block truncate"
           onClick={(e) => e.stopPropagation()}
         >
           {deal.property_address}
@@ -74,21 +74,21 @@ export function DealCard({ deal }: DealCardProps) {
           </span>
         </div>
 
-        {/* Loan amount — prominent green text */}
-        <div className="text-sm font-semibold text-green-600">
+        {/* Loan amount */}
+        <div className="text-sm font-semibold text-black">
           {formatCurrencyCompact(deal.loan_amount)}
         </div>
 
         {/* Footer: days in stage + dormant warning */}
         <div className="flex items-center justify-between">
           <span
-            className={`text-xs ${isDormant ? "text-amber-600 font-semibold" : "text-gray-400"}`}
+            className={`text-xs ${isDormant ? "text-red-600 font-semibold" : "text-gray-400"}`}
           >
             {daysInStage}d in stage
-            {isDormant && " ⚠"}
+            {isDormant && " !"}
           </span>
           {deal.lender_name && (
-            <span className="text-xs text-indigo-500 truncate max-w-[100px]">
+            <span className="text-xs text-gray-500 truncate max-w-[100px]">
               {deal.lender_name}
             </span>
           )}

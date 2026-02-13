@@ -181,7 +181,7 @@ export function KanbanBoard() {
         </div>
         <div>
           <span className="text-gray-500">Pipeline Value:</span>{" "}
-          <span className="font-semibold text-green-600">
+          <span className="font-semibold text-black">
             {formatCurrencyCompact(totalPipelineValue)}
           </span>
         </div>

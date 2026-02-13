@@ -27,22 +27,22 @@ export function KanbanColumn({ stageId, deals }: KanbanColumnProps) {
 
   return (
     <div
-      className={`flex flex-col min-w-[250px] max-w-[280px] bg-gray-50 rounded-lg border ${
-        isOver ? "border-blue-400 bg-blue-50" : "border-gray-200"
+      className={`flex flex-col min-w-[250px] max-w-[280px] rounded-lg border transition-colors ${
+        isOver ? "border-black bg-gray-50" : "border-gray-200 bg-gray-50/50"
       }`}
     >
       {/* Column header with stage name and count */}
       <div className="p-3 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-700">
+          <h3 className="text-sm font-semibold text-black">
             {STAGE_LABELS[stageId] || stageId}
           </h3>
-          <span className="text-xs bg-gray-200 text-gray-600 rounded-full px-2 py-0.5">
+          <span className="text-xs bg-gray-200 text-gray-700 rounded-full px-2 py-0.5 font-medium">
             {deals.length}
           </span>
         </div>
         {columnTotal > 0 && (
-          <p className="text-xs text-green-600 mt-1 font-medium">
+          <p className="text-xs text-gray-500 mt-1 font-medium">
             {formatCurrencyCompact(columnTotal)}
           </p>
         )}

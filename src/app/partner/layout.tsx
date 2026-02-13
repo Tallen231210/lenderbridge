@@ -17,7 +17,7 @@ export default function PartnerLayout({ children }: { children: ReactNode }) {
   if (isLoading) {
     return (
       <div className="flex min-h-screen">
-        <div className="w-64 bg-white border-r border-gray-200" />
+        <div className="w-60 bg-white border-r border-gray-200" />
         <main className="flex-1">
           <PageSkeleton />
         </main>
@@ -30,7 +30,7 @@ export default function PartnerLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-white">
       <PartnerSidebar />
       <main className="flex-1 overflow-auto">
         <ErrorBoundary>{children}</ErrorBoundary>

@@ -1,7 +1,7 @@
 /**
  * Borrower portal top navigation bar.
- * Minimal — borrowers have a simple, read-only view of their deals.
- * No sidebar needed; just a top bar with logo and user button.
+ * Clean white nav with black text (Vercel-inspired).
+ * Borrowers have a simple, read-only view of their deals.
  */
 "use client";
 
@@ -10,12 +10,14 @@ import { UserButton } from "@clerk/nextjs";
 
 export function BorrowerNav() {
   return (
-    <header className="flex items-center justify-between h-16 px-6 bg-white border-b border-gray-200">
+    <header className="flex items-center justify-between h-14 px-6 bg-white border-b border-gray-200">
       <Link href="/borrower/dashboard" className="flex items-center gap-2">
-        <span className="text-xl font-bold text-blue-700">LenderBridge</span>
+        <span className="text-base font-semibold tracking-tight text-black">
+          LenderBridge
+        </span>
       </Link>
       <div className="flex items-center gap-4">
-        <span className="text-sm text-gray-500">Borrower Portal</span>
+        <span className="text-xs text-gray-500">Borrower Portal</span>
         <UserButton afterSignOutUrl="/" />
       </div>
     </header>
