@@ -150,6 +150,7 @@ lenderbridge/
 - **Authorization:** Every Convex query/mutation starts with `requireAuth()`, `requireRole()`, or `requireAdmin()`. Partners can only see their own deals (row-level isolation via `requirePartnerOwnership()`).
 - **Validation:** Dual-layer — client-side Zod schemas for instant feedback, server-side re-validation in Convex mutations for security.
 - **Webhook verification:** Clerk webhooks verified via svix signature before processing.
+- **Invite-based registration:** Partners and borrowers are invited via links shared by admins and partners respectively — there is no public self-registration. Borrower deal auto-linking is scoped by verified email, so even if a link is shared with the wrong person, they cannot access another borrower's deal data. For production, this would be upgraded to token-based invites with expiring, single-use links and email delivery via Resend (already in dependencies) to eliminate manual link sharing entirely.
 
 ### Deal Lifecycle State Machine
 ```
