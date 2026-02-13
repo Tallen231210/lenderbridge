@@ -137,6 +137,50 @@ export const updateUserRole = mutation({
 });
 
 /**
+ * Ensure the current user has the "partner" role.
+ * Called after a user signs up via the /sign-up/partner page.
+ * If the user was already created by the Clerk webhook (with default "borrower" role),
+ * this upgrades them to "partner". If the webhook hasn't fired yet, creates the user
+ * directly as a partner. Never allows escalation to "admin".
+ */
+export const ensurePartnerRole = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        code: "UNAUTHORIZED",
+        message: "Authentication required",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", identity.email!))
+      .unique();
+
+    if (user) {
+      // User exists — only upgrade borrower → partner, never touch admin
+      if (user.role === "borrower") {
+        await ctx.db.patch(user._id, { role: "partner" });
+      }
+      return user._id;
+    }
+
+    // Webhook hasn't fired yet — create user directly as partner
+    const userId = await ctx.db.insert("users", {
+      email: identity.email!.toLowerCase(),
+      name: identity.name || "Partner",
+      clerk_id: identity.subject,
+      role: "partner",
+      created_at: Date.now(),
+    });
+
+    return userId;
+  },
+});
+
+/**
  * Update the current user's profile fields (phone, company, license_number).
  * Users can only update their own profile.
  */

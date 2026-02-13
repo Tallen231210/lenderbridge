@@ -45,11 +45,11 @@ Pre-created accounts for testing all user flows:
 
 | Role | Email | Password |
 |------|-------|----------|
-| **Admin** (Broker) | admin@lenderbridge.com | LenderBridge2024! |
-| **Partner 1** | sarah@example.com | LenderBridge2024! |
-| **Partner 2** | mike@example.com | LenderBridge2024! |
-| **Partner 3** | lisa@example.com | LenderBridge2024! |
-| **Borrower** | borrower@example.com | LenderBridge2024! |
+| **Admin** (Broker) | admin@lenderbridge.com | testing123 |
+| **Partner 1** | sarah@example.com | testing123 |
+| **Partner 2** | mike@example.com | testing123 |
+| **Partner 3** | lisa@example.com | testing123 |
+| **Borrower** | borrower@example.com | testing123 |
 
 Each role redirects to its portal automatically after sign-in.
 

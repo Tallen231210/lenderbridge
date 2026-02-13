@@ -64,13 +64,13 @@ export default function LandingPage() {
               Sign In
             </Button>
           </Link>
-          <Link href="/sign-up">
+          <Link href="/sign-up/partner">
             <Button
               variant="outline"
               size="lg"
               className="w-full sm:w-auto"
             >
-              Create Account
+              Join as Partner
             </Button>
           </Link>
         </div>
