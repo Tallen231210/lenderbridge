@@ -14,9 +14,8 @@ LenderBridge is a commercial loan referral platform with three role-based portal
 - **Backend + DB:** Convex
 - **Auth:** Clerk (@clerk/nextjs)
 - **Styling:** Tailwind CSS + shadcn/ui
-- **Email:** Resend (React Email templates)
 - **Hosting:** Vercel
-- **Address Input:** Google Places API (deal submission autocomplete)
+- **Drag & Drop:** @dnd-kit (Kanban pipeline)
 
 ---
 
@@ -55,8 +54,8 @@ node_modules/
 .next/
 out/
 
-# Convex generated
-convex/_generated/
+# Convex generated files are committed for Vercel builds
+# See: https://docs.convex.dev/understanding/best-practices/other-recommendations
 
 # Debug logs
 npm-debug.log*
@@ -111,30 +110,34 @@ lenderbridge/
 ├── tsconfig.json
 ├── .env.local                    # Never commit — in .gitignore
 ├── convex/
-│   ├── _generated/
-│   ├── schema.ts                 # All 6 table definitions + 1 error_logs table
+│   ├── _generated/               # Committed for Vercel builds
+│   ├── schema.ts                 # All 7 table definitions (users, deals, lenders, commissions, deal_activities, notifications, error_logs)
 │   ├── auth.config.ts            # Clerk integration config
-│   ├── http.ts                   # Clerk webhook endpoint with signature verification
+│   ├── http.ts                   # HTTP router (reserved for future use)
 │   ├── helpers/
 │   │   ├── auth.ts               # requireRole(), requireAdmin(), requirePartnerOwnership()
-│   │   ├── validation.ts         # Input sanitization and validation helpers
-│   │   └── errors.ts             # Typed error classes (AuthError, ValidationError, NotFoundError)
-│   ├── users.ts                  # User queries and mutations
+│   │   └── validation.ts         # Input sanitization and validation helpers
+│   ├── users.ts                  # User CRUD + ensurePartnerRole
 │   ├── deals.ts                  # Deal CRUD + status transitions
 │   ├── lenders.ts                # Lender queries (search, filter, paginate)
 │   ├── commissions.ts            # Commission CRUD
 │   ├── activities.ts             # Deal activity log queries
 │   ├── notifications.ts          # Notification CRUD + mark-read
-│   └── errorLogs.ts              # Automated error telemetry mutations
+│   ├── errorLogs.ts              # Automated error telemetry mutations
+│   ├── seedLenders.ts            # 7,000 lender record generator (seeded PRNG)
+│   ├── seedDemoData.ts           # Demo deals, activities, commissions, notifications
+│   └── seedUsers.ts              # Utility for setting commission rates
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx            # Root layout with ClerkProvider + ConvexProvider
-│   │   ├── page.tsx              # Landing/redirect based on role
+│   │   ├── page.tsx              # Landing: Sign In, Join as Partner, borrower link
 │   │   ├── sign-in/[[...sign-in]]/page.tsx
 │   │   ├── sign-up/
-│   │   │   ├── [[...sign-up]]/page.tsx
-│   │   │   └── partner/page.tsx  # Partner-specific signup
-│   │   ├── (partner)/            # Route group — partner portal
+│   │   │   ├── [[...sign-up]]/page.tsx      # Generic signup (defaults to borrower)
+│   │   │   └── partner/
+│   │   │       ├── page.tsx                 # Partner-specific signup
+│   │   │       └── complete/page.tsx        # Post-signup role assignment
+│   │   ├── partner/              # Partner portal (route segment, not group)
 │   │   │   ├── layout.tsx        # Partner layout with sidebar nav
 │   │   │   ├── dashboard/page.tsx
 │   │   │   ├── deals/
@@ -145,68 +148,54 @@ lenderbridge/
 │   │   │   ├── notifications/page.tsx
 │   │   │   ├── resources/page.tsx
 │   │   │   └── profile/page.tsx
-│   │   ├── (borrower)/           # Route group — borrower portal
+│   │   ├── borrower/             # Borrower portal (route segment)
 │   │   │   ├── layout.tsx
 │   │   │   ├── dashboard/page.tsx  # Deal status view
 │   │   │   └── profile/page.tsx
-│   │   ├── (admin)/              # Route group — admin dashboard
+│   │   ├── admin/                # Admin dashboard (route segment)
 │   │   │   ├── layout.tsx        # Admin layout with sidebar nav
 │   │   │   ├── dashboard/page.tsx  # Kanban pipeline board
 │   │   │   ├── deals/[id]/page.tsx # Deal detail + actions
 │   │   │   ├── lenders/page.tsx    # Lender database search/filter
-│   │   │   ├── partners/page.tsx   # Partner management
+│   │   │   ├── partners/
+│   │   │   │   ├── page.tsx        # Partner management (clickable rows)
+│   │   │   │   └── [id]/page.tsx   # Partner detail with deal history
 │   │   │   ├── commissions/page.tsx
-│   │   │   ├── activity/page.tsx   # Global activity log
+│   │   │   ├── activity/page.tsx   # Global activity log with action filters
 │   │   │   └── system-health/page.tsx  # Error telemetry dashboard
 │   │   └── api/
 │   │       └── webhooks/
-│   │           └── clerk/route.ts  # Clerk webhook handler
+│   │           └── clerk/route.ts  # Clerk webhook handler (Next.js API route)
 │   ├── components/
 │   │   ├── ui/                   # shadcn/ui components
 │   │   ├── layouts/
-│   │   │   ├── PartnerSidebar.tsx
+│   │   │   ├── PartnerSidebar.tsx # Includes NotificationBell
 │   │   │   ├── AdminSidebar.tsx
 │   │   │   └── BorrowerNav.tsx
 │   │   ├── deals/
 │   │   │   ├── DealSubmissionWizard.tsx
 │   │   │   ├── DealCard.tsx      # Kanban card
-│   │   │   ├── DealDetailView.tsx
-│   │   │   ├── DealStatusBadge.tsx
-│   │   │   └── DealStageTimeline.tsx
+│   │   │   └── DealStatusBadge.tsx
 │   │   ├── pipeline/
 │   │   │   ├── KanbanBoard.tsx
-│   │   │   ├── KanbanColumn.tsx
-│   │   │   └── KanbanDragProvider.tsx
-│   │   ├── lenders/
-│   │   │   ├── LenderSearchTable.tsx
-│   │   │   ├── LenderFilters.tsx
-│   │   │   └── LenderAssignModal.tsx
-│   │   ├── commissions/
-│   │   │   ├── CommissionTable.tsx
-│   │   │   └── CommissionStats.tsx
+│   │   │   └── KanbanColumn.tsx
 │   │   ├── notifications/
-│   │   │   ├── NotificationBell.tsx
-│   │   │   └── NotificationList.tsx
+│   │   │   └── NotificationBell.tsx
 │   │   ├── shared/
-│   │   │   ├── ErrorBoundary.tsx  # Reusable error boundary with telemetry
+│   │   │   ├── ErrorBoundary.tsx
 │   │   │   ├── LoadingSkeleton.tsx
 │   │   │   ├── EmptyState.tsx
-│   │   │   ├── StatsCard.tsx
-│   │   │   └── Toast.tsx
+│   │   │   └── StatsCard.tsx
 │   │   └── providers/
-│   │       ├── ConvexClientProvider.tsx
-│   │       └── ErrorTelemetryProvider.tsx
+│   │       └── ConvexClientProvider.tsx
 │   ├── lib/
 │   │   ├── constants.ts          # Deal stages, property types, loan types enums
 │   │   ├── utils.ts              # Formatting helpers (currency, dates, etc.)
 │   │   └── validators.ts         # Client-side validation schemas (zod)
 │   ├── hooks/
 │   │   ├── useCurrentUser.ts     # Get current user with role
-│   │   ├── useRequireRole.ts     # Redirect if wrong role
-│   │   └── useErrorHandler.ts    # Standardized error handling hook
-│   └── middleware.ts             # Clerk auth middleware + role-based redirects
-├── scripts/
-│   └── seed-lenders.ts           # Lender data import script
+│   │   └── useRequireRole.ts     # Redirect if wrong role
+│   └── middleware.ts             # Clerk auth middleware (public route whitelist)
 └── public/
     └── ...
 ```
@@ -368,13 +357,11 @@ CLERK_SECRET_KEY=sk_...
 CLERK_WEBHOOK_SECRET=whsec_...
 NEXT_PUBLIC_CONVEX_URL=https://...convex.cloud
 CONVEX_DEPLOY_KEY=...
-RESEND_API_KEY=re_...
-NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=...
 ```
 
 **Rules:**
 - Only `NEXT_PUBLIC_*` variables are exposed to the browser
-- CLERK_SECRET_KEY, CLERK_WEBHOOK_SECRET, RESEND_API_KEY, CONVEX_DEPLOY_KEY are server-only
+- CLERK_SECRET_KEY, CLERK_WEBHOOK_SECRET, CONVEX_DEPLOY_KEY are server-only
 - `.env.local` is in `.gitignore` — verified before first commit
 - README documents required env vars without values
 
@@ -818,6 +805,34 @@ export const updateDealStatus = mutation({
 
 ---
 
+## USER ONBOARDING FLOWS
+
+### Landing Page (`/`)
+- Authenticated users are auto-redirected to their role-specific dashboard
+- Unauthenticated users see three entry points:
+  - **"Sign In"** (primary button) — existing users of all roles
+  - **"Join as Partner"** (outline button) — new referral partner signup
+  - **"Borrower? Check your deal status"** (text link) — points to sign-in
+
+### Partner Signup (`/sign-up/partner`)
+- Uses Clerk's SignUp component with `forceRedirectUrl` to `/sign-up/partner/complete`
+- Complete page calls `ensurePartnerRole` mutation which:
+  - If user already exists in Convex (webhook fired first): upgrades from "borrower" to "partner"
+  - If user doesn't exist yet (webhook race condition): creates user directly as "partner"
+  - Never allows escalation to "admin"
+- Redirects to partner dashboard after role assignment
+
+### Generic Signup (`/sign-up`)
+- Clerk webhook creates user in Convex with default "borrower" role
+- Not linked from the landing page — borrowers are invited by partners or use sign-in
+- Serves as a catch-all for edge cases
+
+### Admin Accounts
+- No self-service signup — admin accounts are created directly in the database
+- This is intentional for security: the admin role should never be self-assignable
+
+---
+
 ## FEATURE SPECIFICATIONS
 
 ### Partner Portal
@@ -896,25 +911,25 @@ export const updateDealStatus = mutation({
 - Pagination at 50 per page
 - Text search on lender name and contact name
 
-**Lender Assignment Modal:**
-- Opens from deal detail
-- Pre-filtered to match deal's property type and state
-- Search/filter to narrow down
-- One-click assign
-- Triggers: updates deal, creates activity log, notifies partner
-
 **Partner Management (`/admin/partners`):**
 - All partners: name, deal count, commission total, last active
-- Click through to see partner's deals
+- Clickable rows navigate to partner detail page
+
+**Partner Detail (`/admin/partners/[id]`):**
+- Stats cards: total deals, active deals, closed deals, earned
+- Pending commission callout
+- Full deal history (each deal links to deal detail page)
+- Partner profile info (email, phone, company, license, commission rate)
 
 **Commission Management (`/admin/commissions`):**
 - All commissions across all partners
-- Actions: set rate, mark as paid
-- Filter by status, partner
+- Actions: mark as paid
+- Filter by status
 
 **Activity Log (`/admin/activity`):**
 - Global feed of all actions: submissions, stage changes, assignments, notes
-- Filter by deal, partner, action type
+- Pill-button filters by action type: All, Submissions, Stage Changes, Lender Assignments, Notes, Commissions
+- Dynamic count updates when filtered
 
 **System Health (`/admin/system-health`):**
 - Recent error logs from error_logs table
@@ -942,7 +957,7 @@ export const updateDealStatus = mutation({
 ### Lender Database — 7,000 Records (CRITICAL)
 The brief specifically says "approximately 7,000 lenders." The evaluators WILL test search and filtering at scale. You must seed 7,000 realistic lender records.
 
-The seed script (`scripts/seed-lenders.ts`) must generate 7,000 lenders with:
+The seed script (`convex/seedLenders.ts`) generates 7,000 lenders with:
 - **Realistic institution names** — Combine patterns like: "[City] [Type] [Entity]" (e.g., "Austin Capital Lending", "Pacific Northwest Credit Union", "Southeastern Bridge Fund", "Manhattan Commercial Mortgage Corp")
 - **Contact names** — Random first + last name combinations
 - **Email and phone** — Fake but realistic format
@@ -953,12 +968,11 @@ The seed script (`scripts/seed-lenders.ts`) must generate 7,000 lenders with:
 - **Loan types** — Random subset of: permanent, bridge, construction, land, sba, mezzanine
 - **Notes** — Some lenders have broker notes (e.g., "Fast closer", "Strict on credit score", "Good for first-time investors"), most are empty
 
-The script should:
-1. Generate all 7,000 records programmatically (do NOT hardcode 7,000 entries)
-2. Ensure variety — different states, specialties, loan ranges throughout
-3. Batch insert (Convex has batch limits — insert in chunks of 100-200)
-4. Log progress: "Inserted 200/7000 lenders..." 
-5. Run as a standalone script: `npx ts-node scripts/seed-lenders.ts` or as a Convex function
+The script:
+1. Generates all 7,000 records programmatically using a seeded PRNG (mulberry32) for reproducibility
+2. Ensures variety — different states, specialties, loan ranges throughout
+3. Batch inserts in chunks of 100 (Convex mutation limits)
+4. Runs as a Convex mutation: `npx convex run seedLenders:seedAll`
 
 ### Other Demo Data
 For submission, also seed:
@@ -975,13 +989,13 @@ For submission, also seed:
 - Activity history on multiple deals (status changes, lender assignments, notes)
 - Some notifications (read and unread) for partner users
 
-Create demo credentials and document them in the README:
+Demo credentials (pre-created in Clerk and synced to Convex):
 ```
-Admin:     admin@lenderbridge.com / LenderBridge2024!
-Partner 1: sarah@example.com / LenderBridge2024!
-Partner 2: mike@example.com / LenderBridge2024!
-Partner 3: lisa@example.com / LenderBridge2024!
-Borrower:  borrower@example.com / LenderBridge2024!
+Admin:     admin@lenderbridge.com / testing123
+Partner 1: sarah@example.com / testing123
+Partner 2: mike@example.com / testing123
+Partner 3: lisa@example.com / testing123
+Borrower:  borrower@example.com / testing123
 ```
 
 IMPORTANT: These accounts must be pre-created in Clerk AND synced to Convex users table so the evaluators can log in immediately without signing up. The brief explicitly says "demo credentials so we can test all user flows without signing up."
