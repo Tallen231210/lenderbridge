@@ -6,9 +6,10 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { useDebounce } from "@/hooks/useDebounce";
 import { PageSkeleton } from "@/components/shared/LoadingSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Input } from "@/components/ui/input";
@@ -49,8 +50,11 @@ export default function AdminLendersPage() {
   const [loanType, setLoanType] = useState<string>("all");
   const [page, setPage] = useState(0);
 
+  // Debounce search text to avoid firing a query on every keystroke
+  const debouncedSearch = useDebounce(searchText, 300);
+
   const result = useQuery(api.lenders.searchLenders, {
-    searchText: searchText || undefined,
+    searchText: debouncedSearch || undefined,
     propertyType: propertyType !== "all" ? propertyType : undefined,
     state: state !== "all" ? state : undefined,
     loanType: loanType !== "all" ? loanType : undefined,
@@ -64,11 +68,25 @@ export default function AdminLendersPage() {
     setPage(0);
   }
 
-  if (result === undefined) {
-    return <PageSkeleton />;
+  // Keep previous results visible while new query loads — prevents
+  // flash of "No lenders found" between search keystrokes.
+  const hasLoadedRef = useRef(false);
+  const prevResultRef = useRef(result);
+  if (result !== undefined) {
+    hasLoadedRef.current = true;
+    prevResultRef.current = result;
   }
 
-  const { lenders, total, hasMore } = result;
+  // Use the latest result if available, otherwise show previous results
+  const displayResult = result ?? prevResultRef.current;
+  const lenders = displayResult?.lenders ?? [];
+  const total = displayResult?.total ?? 0;
+  const hasMore = displayResult?.hasMore ?? false;
+
+  // Only show full-page skeleton before the very first query resolves
+  if (!hasLoadedRef.current) {
+    return <PageSkeleton />;
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -79,7 +97,7 @@ export default function AdminLendersPage() {
         </p>
       </div>
 
-      {/* Search and filters */}
+      {/* Search and filters — always visible, never replaced by skeleton */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-wrap items-center gap-3">

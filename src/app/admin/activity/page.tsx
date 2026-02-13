@@ -21,6 +21,7 @@ const ACTION_FILTERS = [
   { value: "lender_assigned", label: "Lender Assignments" },
   { value: "note_added", label: "Notes" },
   { value: "commission_created", label: "Commissions" },
+  { value: "commission_paid", label: "Payments" },
 ] as const;
 
 export default function AdminActivityPage() {
@@ -92,7 +93,9 @@ export default function AdminActivityPage() {
                             ? "bg-indigo-500"
                             : activity.action === "note_added"
                               ? "bg-gray-400"
-                              : "bg-gray-300"
+                              : activity.action === "commission_paid"
+                                ? "bg-green-500"
+                                : "bg-gray-300"
                     }`}
                   />
                   <div className="flex-1 min-w-0">

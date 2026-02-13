@@ -60,7 +60,7 @@ export const getDealCommissions = query({
 export const markAsPaid = mutation({
   args: { commissionId: v.id("commissions") },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    const admin = await requireAdmin(ctx);
 
     const commission = await ctx.db.get(args.commissionId);
     if (!commission) {
@@ -82,8 +82,18 @@ export const markAsPaid = mutation({
       paid_date: new Date().toISOString().split("T")[0],
     });
 
-    // Notify the partner about the payment
+    // Log to activity feed so the payment appears in the admin activity log
     const deal = await ctx.db.get(commission.deal_id);
+
+    await ctx.db.insert("deal_activities", {
+      deal_id: commission.deal_id,
+      actor_id: admin._id,
+      action: "commission_paid",
+      details: `Commission marked as paid: $${commission.amount.toLocaleString()} for ${deal?.property_address || "a deal"}`,
+      created_at: Date.now(),
+    });
+
+    // Notify the partner about the payment
     await ctx.db.insert("notifications", {
       user_id: commission.partner_id,
       deal_id: commission.deal_id,
