@@ -1,8 +1,8 @@
 /**
  * Sign-in page — uses Clerk's pre-built SignIn component.
- * Redirects already-authenticated users to the landing page (which then
- * routes them to their role-specific dashboard) to avoid a brief flash
- * of the sign-in form after login.
+ * After authentication, Clerk redirects to /auth/redirect which routes
+ * users to their role-specific dashboard. Already-signed-in users are
+ * sent there immediately to avoid showing the sign-in form.
  */
 "use client";
 
@@ -16,23 +16,23 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
-      router.replace("/");
+      router.replace("/auth/redirect");
     }
   }, [isLoaded, isSignedIn, router]);
 
   // Don't render the sign-in form if already authenticated
   if (!isLoaded || isSignedIn) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-white">
         <div className="animate-pulse text-gray-500">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-white">
       <SignIn
-        forceRedirectUrl="/"
+        forceRedirectUrl="/auth/redirect"
         appearance={{
           elements: {
             rootBox: "mx-auto",

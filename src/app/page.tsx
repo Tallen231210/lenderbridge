@@ -1,12 +1,14 @@
 /**
  * Landing page — redirects authenticated users to their role-specific portal.
- * Unauthenticated users see a simple landing with sign-in CTA.
+ * Uses useConvexAuth() instead of Clerk's useAuth() to ensure the JWT token
+ * has been delivered to Convex before rendering, preventing a flash of the
+ * landing page during the auth propagation gap.
  */
 "use client";
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useConvexAuth } from "convex/react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -19,24 +21,24 @@ const ROLE_DASHBOARDS: Record<string, string> = {
 };
 
 export default function LandingPage() {
-  const { isSignedIn, isLoaded: authLoaded } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const { user, isLoading } = useCurrentUser();
   const router = useRouter();
 
   // Redirect authenticated users to their portal
   useEffect(() => {
-    if (!authLoaded || isLoading) return;
+    if (authLoading || isLoading) return;
 
-    if (isSignedIn && user) {
+    if (isAuthenticated && user) {
       const dashboard = ROLE_DASHBOARDS[user.role];
       if (dashboard) {
         router.replace(dashboard);
       }
     }
-  }, [isSignedIn, authLoaded, user, isLoading, router]);
+  }, [isAuthenticated, authLoading, user, isLoading, router]);
 
-  // Show loading while checking auth
-  if (!authLoaded || (isSignedIn && isLoading)) {
+  // Show loading while auth token is propagating or user record is resolving
+  if (authLoading || (isAuthenticated && (isLoading || !user))) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-pulse text-gray-500">Loading...</div>

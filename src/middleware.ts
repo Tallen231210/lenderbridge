@@ -1,19 +1,29 @@
 /**
  * Clerk authentication middleware — protects all routes except public ones.
- * Public routes: landing page, sign-in, sign-up, and webhook endpoints.
- * All other routes require authentication via Clerk.
+ * Redirects authenticated users from the landing page to /auth/redirect,
+ * which handles role-based routing client-side. This prevents any flash of
+ * the landing page content after sign-in.
  */
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 // Routes that don't require authentication
 const isPublicRoute = createRouteMatcher([
   "/",
+  "/auth/redirect",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/webhooks(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
+  const { userId } = await auth();
+
+  // Redirect authenticated users away from the landing page
+  if (request.nextUrl.pathname === "/" && userId) {
+    return NextResponse.redirect(new URL("/auth/redirect", request.url));
+  }
+
   if (!isPublicRoute(request)) {
     await auth.protect();
   }
