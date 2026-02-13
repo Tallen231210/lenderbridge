@@ -178,7 +178,7 @@ The following deviations from the Phase 1 scope of work were made during impleme
 
 ## Time Spent
 
-_[To be filled in at project completion]_
+Approximately **38 hours** across architecture planning, implementation, testing, and deployment.
 
 ---
 
