@@ -87,7 +87,7 @@ export const getCurrentUser = query({
 
     const user = await ctx.db
       .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
+      .withIndex("by_email", (q) => q.eq("email", identity.email!.toLowerCase()))
       .unique();
 
     return user;
@@ -156,7 +156,7 @@ export const ensurePartnerRole = mutation({
 
     const user = await ctx.db
       .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
+      .withIndex("by_email", (q) => q.eq("email", identity.email!.toLowerCase()))
       .unique();
 
     if (user) {
@@ -175,6 +175,62 @@ export const ensurePartnerRole = mutation({
       role: "partner",
       created_at: Date.now(),
     });
+
+    return userId;
+  },
+});
+
+/**
+ * Ensure the current authenticated user has a Convex record.
+ * Safety net for the Clerk webhook race condition: if the webhook hasn't
+ * fired yet (or failed), this creates the user directly as a borrower.
+ * Also auto-links the borrower to any deals matching their email.
+ * Called from the auth redirect page when no user record is found.
+ */
+export const ensureUser = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        code: "UNAUTHORIZED",
+        message: "Authentication required",
+      });
+    }
+
+    // Check if the user already exists (webhook may have just fired)
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", identity.email!.toLowerCase()))
+      .unique();
+
+    if (existing) {
+      return existing._id;
+    }
+
+    // Webhook hasn't fired yet — create user directly as borrower
+    const userId = await ctx.db.insert("users", {
+      email: identity.email!.toLowerCase(),
+      name: identity.name || "User",
+      clerk_id: identity.subject,
+      role: "borrower",
+      created_at: Date.now(),
+    });
+
+    // Auto-link to any deals referencing this email
+    const matchingDeals = await ctx.db
+      .query("deals")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("borrower_email"), identity.email!.toLowerCase()),
+          q.eq(q.field("borrower_id"), undefined)
+        )
+      )
+      .collect();
+
+    for (const deal of matchingDeals) {
+      await ctx.db.patch(deal._id, { borrower_id: userId });
+    }
 
     return userId;
   },

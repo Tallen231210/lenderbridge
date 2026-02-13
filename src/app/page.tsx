@@ -3,10 +3,14 @@
  * Uses useConvexAuth() instead of Clerk's useAuth() to ensure the JWT token
  * has been delivered to Convex before rendering, preventing a flash of the
  * landing page during the auth propagation gap.
+ *
+ * Also handles the webhook race condition: if an authenticated user has no
+ * Convex record (webhook hasn't fired yet), redirects to /auth/redirect
+ * which will create the record via ensureUser.
  */
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useConvexAuth } from "convex/react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -24,6 +28,7 @@ export default function LandingPage() {
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const { user, isLoading } = useCurrentUser();
   const router = useRouter();
+  const redirectedRef = useRef(false);
 
   // Redirect authenticated users to their portal
   useEffect(() => {
@@ -34,6 +39,11 @@ export default function LandingPage() {
       if (dashboard) {
         router.replace(dashboard);
       }
+    } else if (isAuthenticated && !user && !redirectedRef.current) {
+      // Authenticated but no Convex record — send to auth redirect page
+      // which will call ensureUser to create the record
+      redirectedRef.current = true;
+      router.replace("/auth/redirect");
     }
   }, [isAuthenticated, authLoading, user, isLoading, router]);
 
