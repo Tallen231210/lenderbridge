@@ -15,8 +15,8 @@ node_modules/
 .next/
 out/
 
-# Convex generated
-convex/_generated/
+# Convex generated files are committed to support Vercel builds
+# See: https://docs.convex.dev/understanding/best-practices/other-recommendations#check-generated-code-into-version-control
 
 # Testing
 /coverage
