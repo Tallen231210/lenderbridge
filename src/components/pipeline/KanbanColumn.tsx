@@ -27,7 +27,7 @@ export function KanbanColumn({ stageId, deals }: KanbanColumnProps) {
 
   return (
     <div
-      className={`flex flex-col min-w-[250px] max-w-[280px] rounded-lg border transition-colors ${
+      className={`flex flex-col min-w-[250px] max-w-[280px] rounded-lg border transition-colors duration-100 ${
         isOver ? "border-black bg-gray-50" : "border-gray-200 bg-gray-50/50"
       }`}
     >

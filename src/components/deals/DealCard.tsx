@@ -3,6 +3,13 @@
  * Displays property address, partner name, loan amount, and days in stage.
  * Shows amber warning badge for dormant deals (14+ days in stage).
  * Used exclusively on the admin Kanban pipeline board.
+ *
+ * Split into three parts to avoid a dnd-kit anti-pattern:
+ * - CardInner: presentational UI (private, no hooks)
+ * - DealCard: sortable wrapper used inside KanbanColumn
+ * - DealCardOverlay: static wrapper used inside DragOverlay
+ *   (useSortable must never run inside DragOverlay — it produces
+ *   stale transforms that offset the overlay from the cursor)
  */
 "use client";
 
@@ -29,10 +36,55 @@ interface DealCardProps {
   deal: DealCardData;
 }
 
-export function DealCard({ deal }: DealCardProps) {
+/** Private presentational component — all visual content, no drag logic. */
+function CardInner({ deal }: DealCardProps) {
   const daysInStage = daysSince(deal.stage_entered_at);
   const isDormant = daysInStage >= DORMANT_THRESHOLD_DAYS;
 
+  return (
+    <div className="space-y-1.5">
+      {/* Property address — clickable link to deal detail */}
+      <Link
+        href={`/admin/deals/${deal._id}`}
+        className="text-sm font-medium text-black hover:underline block truncate"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {deal.property_address}
+      </Link>
+
+      {/* Partner name and property type */}
+      <div className="flex items-center justify-between text-xs text-gray-500">
+        <span className="truncate">{deal.partner_name}</span>
+        <span className="capitalize">
+          {deal.property_type.replace(/_/g, " ")}
+        </span>
+      </div>
+
+      {/* Loan amount */}
+      <div className="text-sm font-semibold text-black">
+        {formatCurrencyCompact(deal.loan_amount)}
+      </div>
+
+      {/* Footer: days in stage + dormant warning */}
+      <div className="flex items-center justify-between">
+        <span
+          className={`text-xs ${isDormant ? "text-red-600 font-semibold" : "text-gray-400"}`}
+        >
+          {daysInStage}d in stage
+          {isDormant && " !"}
+        </span>
+        {deal.lender_name && (
+          <span className="text-xs text-gray-500 truncate max-w-[100px]">
+            {deal.lender_name}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Sortable deal card — used inside KanbanColumn (within SortableContext). */
+export function DealCard({ deal }: DealCardProps) {
   const {
     attributes,
     listeners,
@@ -44,8 +96,8 @@ export function DealCard({ deal }: DealCardProps) {
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
+    transition: isDragging ? "none" : transition,
+    opacity: isDragging ? 0.4 : 1,
   };
 
   return (
@@ -54,46 +106,24 @@ export function DealCard({ deal }: DealCardProps) {
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-white rounded-md border border-gray-200 p-3 hover:border-gray-300 transition-colors cursor-grab active:cursor-grabbing"
+      className={`bg-white rounded-md border border-gray-200 p-3 cursor-grab active:cursor-grabbing ${
+        isDragging ? "" : "hover:border-gray-300 transition-colors"
+      }`}
     >
-      <div className="space-y-1.5">
-        {/* Property address — clickable link to deal detail */}
-        <Link
-          href={`/admin/deals/${deal._id}`}
-          className="text-sm font-medium text-black hover:underline block truncate"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {deal.property_address}
-        </Link>
+      <CardInner deal={deal} />
+    </div>
+  );
+}
 
-        {/* Partner name and property type */}
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span className="truncate">{deal.partner_name}</span>
-          <span className="capitalize">
-            {deal.property_type.replace(/_/g, " ")}
-          </span>
-        </div>
-
-        {/* Loan amount */}
-        <div className="text-sm font-semibold text-black">
-          {formatCurrencyCompact(deal.loan_amount)}
-        </div>
-
-        {/* Footer: days in stage + dormant warning */}
-        <div className="flex items-center justify-between">
-          <span
-            className={`text-xs ${isDormant ? "text-red-600 font-semibold" : "text-gray-400"}`}
-          >
-            {daysInStage}d in stage
-            {isDormant && " !"}
-          </span>
-          {deal.lender_name && (
-            <span className="text-xs text-gray-500 truncate max-w-[100px]">
-              {deal.lender_name}
-            </span>
-          )}
-        </div>
-      </div>
+/**
+ * Static overlay card — used inside DragOverlay.
+ * No useSortable hook, so no phantom transforms that offset the card
+ * from the cursor.
+ */
+export function DealCardOverlay({ deal }: DealCardProps) {
+  return (
+    <div className="bg-white rounded-md border border-gray-200 p-3 shadow-lg cursor-grabbing opacity-90">
+      <CardInner deal={deal} />
     </div>
   );
 }

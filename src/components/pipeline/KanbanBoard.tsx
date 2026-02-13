@@ -3,6 +3,10 @@
  * Columns represent active deal stages (submitted through clear_to_close).
  * Dragging a card between columns triggers a status change mutation.
  * Includes pipeline stats, search bar, and partner/property type filters.
+ *
+ * DragOverlay renders a static DealCardOverlay (no useSortable) so the
+ * floating card tracks the cursor correctly across columns. The ancestor
+ * CSS and scroll containers have been fixed to avoid position:fixed bugs.
  */
 "use client";
 
@@ -15,13 +19,13 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  closestCorners,
+  closestCenter,
 } from "@dnd-kit/core";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { KanbanColumn } from "./KanbanColumn";
-import { DealCard, DealCardData } from "@/components/deals/DealCard";
+import { DealCardData, DealCardOverlay } from "@/components/deals/DealCard";
 import { ACTIVE_STAGES, STAGE_LABELS, PROPERTY_TYPES } from "@/lib/constants";
 import { formatCurrencyCompact } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -43,6 +47,11 @@ export function KanbanBoard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [partnerFilter, setPartnerFilter] = useState<string>("all");
   const [propertyFilter, setPropertyFilter] = useState<string>("all");
+
+  // Optimistic moves: maps deal ID → target stage. Applied instantly on drop
+  // so the card appears in its new column before the mutation round-trips.
+  // Cleared when the Convex reactive query catches up (or on error).
+  const [pendingMoves, setPendingMoves] = useState<Record<string, string>>({});
 
   // dnd-kit pointer sensor with a small activation distance to avoid
   // accidental drags when clicking links inside cards
@@ -96,8 +105,10 @@ export function KanbanBoard() {
       let activeCount = 0;
 
       for (const deal of filtered) {
-        if (cols[deal.status]) {
-          cols[deal.status].push(deal as DealCardData);
+        // Use optimistic status if a drag-drop is pending for this deal
+        const effectiveStatus = pendingMoves[deal._id] || deal.status;
+        if (cols[effectiveStatus]) {
+          cols[effectiveStatus].push({ ...deal, status: effectiveStatus } as DealCardData);
           pipelineValue += deal.loan_amount;
           activeCount++;
         }
@@ -112,7 +123,7 @@ export function KanbanBoard() {
         totalPipelineValue: pipelineValue,
         totalActiveDeals: activeCount,
       };
-    }, [deals, searchQuery, partnerFilter, propertyFilter]);
+    }, [deals, searchQuery, partnerFilter, propertyFilter, pendingMoves]);
 
   if (deals === undefined) {
     return <PageSkeleton />;
@@ -122,6 +133,10 @@ export function KanbanBoard() {
     const dealId = event.active.id as string;
     const deal = deals?.find((d) => d._id === dealId);
     if (deal) setActiveDeal(deal as DealCardData);
+  }
+
+  function handleDragCancel() {
+    setActiveDeal(null);
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -153,18 +168,33 @@ export function KanbanBoard() {
     const currentDeal = deals?.find((d) => d._id === dealId);
     if (!currentDeal || currentDeal.status === targetStage) return;
 
-    // Execute the status change mutation
+    // Optimistically move the card to the target column immediately
+    const dealIdStr = dealId as string;
+    setPendingMoves((prev) => ({ ...prev, [dealIdStr]: targetStage! }));
+
+    // Fire the mutation — clear optimistic state when Convex catches up
     updateStatus({
       dealId,
       newStatus: targetStage,
       note: `Moved via pipeline board from ${STAGE_LABELS[currentDeal.status]} to ${STAGE_LABELS[targetStage]}`,
     })
       .then(() => {
+        setPendingMoves((prev) => {
+          const next = { ...prev };
+          delete next[dealIdStr];
+          return next;
+        });
         toast.success(
           `Deal moved to ${STAGE_LABELS[targetStage!]}`
         );
       })
       .catch((err: Error) => {
+        // Revert optimistic move on failure
+        setPendingMoves((prev) => {
+          const next = { ...prev };
+          delete next[dealIdStr];
+          return next;
+        });
         toast.error(err.message || "Failed to update deal status");
       });
   }
@@ -226,9 +256,10 @@ export function KanbanBoard() {
       {/* Kanban columns — horizontal scrollable */}
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
       >
         <div className="flex gap-3 overflow-x-auto pb-4">
           {ACTIVE_STAGES.map((stage) => (
@@ -240,13 +271,9 @@ export function KanbanBoard() {
           ))}
         </div>
 
-        {/* Drag overlay — shows the card being dragged */}
-        <DragOverlay>
-          {activeDeal ? (
-            <div className="rotate-2 opacity-90">
-              <DealCard deal={activeDeal} />
-            </div>
-          ) : null}
+        {/* DealCardOverlay has no useSortable — avoids phantom transforms */}
+        <DragOverlay dropAnimation={null}>
+          {activeDeal ? <DealCardOverlay deal={activeDeal} /> : null}
         </DragOverlay>
       </DndContext>
     </div>
