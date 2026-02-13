@@ -1,9 +1,10 @@
 /**
- * One-time utility to set commission rates on partner users.
- * Run with: npx convex run seedUsers:setCommissionRates
+ * Seed utilities for user management.
+ * Run with: npx convex run seedUsers:<function>
  */
 import { mutation } from "./_generated/server";
 
+/** Set commission rates on all partner users. */
 export const setCommissionRates = mutation({
   args: {},
   handler: async (ctx) => {
@@ -17,5 +18,17 @@ export const setCommissionRates = mutation({
     }
 
     return { updated: partners.length };
+  },
+});
+
+/** Delete all users — used when Clerk accounts are recreated with new IDs. */
+export const clearAllUsers = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db.query("users").collect();
+    for (const user of users) {
+      await ctx.db.delete(user._id);
+    }
+    return { deleted: users.length };
   },
 });
